@@ -1,0 +1,77 @@
+name: CMJ781
+on:
+  push:
+    paths:
+      - '.github/workflows/CMJ781.yml'
+      - 'diy/**'
+  schedule:
+    - cron: 10 */12 * * *
+  watch:
+    types: started
+  repository_dispatch:
+
+jobs:
+  merge:
+    if: github.event.repository.owner.id == github.event.sender.id
+    runs-on: Ubuntu-20.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        ref: master
+        fetch-depth: 0
+        lfs: true
+
+    - name: Set git identity
+      run : |
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+
+    - name: Syn upstream
+      run: |
+        rm -rf `find -maxdepth 1 -type d -name "[!.]*" ! -path "./diy"`
+        git rm -r --cache *
+        
+        function git_sparse_clone() (
+          branch="$1" rurl="$2" localdir="$3" && shift 3
+          git clone -b $branch --depth 1 --filter=blob:none --sparse $rurl $localdir
+          cd $localdir
+          git sparse-checkout init --cone
+          git sparse-checkout set $@
+          mv -n $@ ../
+          cd ..
+          rm -rf $localdir
+          )
+
+        git clone --depth 1 https://github.com/small-5/luci-app-adblock-plus &
+        git clone --depth 1 https://github.com/Hyy2001X/luci-app-autoupdate &
+        git clone --depth 1 https://github.com/project-lede/luci-app-godproxy &
+
+        svn co https://github.com/281677160/openwrt-package/branches/19.07/luci-app-modeminfo &
+        svn co https://github.com/281677160/openwrt-package/branches/19.07/luci-app-smartinfo &
+
+        ( for ipk in $(ls applications); do
+        	if [[ $(ls -l applications/$ipk/po | wc -l) -gt 3 ]]; then
+        		rm -rf applications/$ipk
+        	fi
+        done ) &
+
+    - name: SSH connection to Actions
+      uses: garypang13/debugger-action@master
+      if: 1 == 0
+
+    - name: Apply patches
+      run: find "diy/patches" -type f -name '*.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -p1 -E --forward --no-backup-if-mismatch"
+
+    - name: Apply
+      run: |
+        git add .
+        git commit -m "update" || true
+        git push
+        
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@main
+      with:
+        retain_days: 1
+        keep_minimum_runs: 1
