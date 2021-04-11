@@ -99,6 +99,13 @@ jobs:
         git clone --depth 1 https://github.com/ysc3839/luci-proto-minieap &
         git clone --depth 1 https://github.com/immortalwrt/openwrt-cdnspeedtest cdnspeedtest &
         git clone --depth 1 https://github.com/immortalwrt/openwrt-gowebdav && mv -n openwrt-gowebdav/* ./ ; rm -Rf openwrt-gowebdav &
+        
+        git clone --depth 1 https://github.com/small-5/luci-app-adblock-plus &
+        git clone --depth 1 https://github.com/Hyy2001X/luci-app-autoupdate &
+        git clone --depth 1 https://github.com/project-lede/luci-app-godproxy &
+
+        svn co https://github.com/281677160/openwrt-package/branches/19.07/luci-app-modeminfo &
+        svn co https://github.com/281677160/openwrt-package/branches/19.07/luci-app-smartinfo &
 
         git clone --depth 1 https://github.com/jerrykuku/luci-theme-argon &
         git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config &
